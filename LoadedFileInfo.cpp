@@ -399,10 +399,54 @@ void LoadedFileInfo::LoadSteps()
 		fclose(fpt);
 	}
 	
-	// read predicted steps
+	// read predicted steps for sensor 01
 	temp.clear();
 	temp.append(folderPath.c_str());
-	temp.append("\\predicted_steps.txt");
+	temp.append("\\predicted_steps_sensor01.txt");
+
+	// put predicted steps in list 1
+	fpt = fopen(temp.c_str(), "r");
+	if (fpt == NULL)
+	{
+		return;
+	}
+	else
+	{
+		i = fscanf(fpt, "%d\n", &index);
+		while (i == 1)
+		{
+			predictedStepIndices1.push_back(index);
+			i = fscanf(fpt, "%d\n", &index);
+		}
+		fclose(fpt);
+	}
+
+	// read predicted steps for sensor 02
+	temp.clear();
+	temp.append(folderPath.c_str());
+	temp.append("\\predicted_steps_sensor02.txt");
+
+	// put predicted steps in list 2
+	fpt = fopen(temp.c_str(), "r");
+	if (fpt == NULL)
+	{
+		return;
+	}
+	else
+	{
+		i = fscanf(fpt, "%d\n", &index);
+		while (i == 1)
+		{
+			predictedStepIndices2.push_back(index);
+			i = fscanf(fpt, "%d\n", &index);
+		}
+		fclose(fpt);
+	}
+
+	// read predicted steps for sensor 03
+	temp.clear();
+	temp.append(folderPath.c_str());
+	temp.append("\\predicted_steps_sensor03.txt");
 
 	// put predicted steps in list
 	fpt = fopen(temp.c_str(), "r");
@@ -415,7 +459,7 @@ void LoadedFileInfo::LoadSteps()
 		i = fscanf(fpt, "%d\n", &index);
 		while (i == 1)
 		{
-			predictedStepIndices.push_back(index);
+			predictedStepIndices3.push_back(index);
 			i = fscanf(fpt, "%d\n", &index);
 		}
 		fclose(fpt);
@@ -468,12 +512,16 @@ void LoadedFileInfo::DeleteStep(int position, int maxRange)
 	bool leftIndexMatched = false;
 	bool rightEdgecaseIndexMatched = false;
 	bool leftEdgecaseIndexMatched = false;
-	bool predictedIndexMatched = false;
+	bool predictedIndexMatched1 = false;
+	bool predictedIndexMatched2 = false;
+	bool predictedIndexMatched3 = false;
 	int rightIndex = -1;
 	int leftIndex = -1;
 	int rightEdgecaseIndex = -1;
 	int leftEdgecaseIndex = -1;
-	int predictedIndex = -1;
+	int predictedIndex1 = -1;
+	int predictedIndex2 = -1;
+	int predictedIndex3 = -1;
 	int firstTypeMatched = -1;
 	int firstIndexMatched = 500000;
 	//use iterator, match start and end index
@@ -542,14 +590,44 @@ void LoadedFileInfo::DeleteStep(int position, int maxRange)
 		}
 	}
 
-	ptr = predictedStepIndices.begin();
+	ptr = predictedStepIndices1.begin();
 
-	while (ptr != predictedStepIndices.end() && !predictedIndexMatched)
+	while (ptr != predictedStepIndices1.end() && !predictedIndexMatched1)
 	{
 		if ((*ptr) >= position)
 		{
-			predictedIndexMatched = true;
-			predictedIndex = (*ptr);
+			predictedIndexMatched1 = true;
+			predictedIndex1 = (*ptr);
+		}
+		else
+		{
+			ptr++;
+		}
+	}
+
+	ptr = predictedStepIndices2.begin();
+
+	while (ptr != predictedStepIndices2.end() && !predictedIndexMatched2)
+	{
+		if ((*ptr) >= position)
+		{
+			predictedIndexMatched2 = true;
+			predictedIndex2 = (*ptr);
+		}
+		else
+		{
+			ptr++;
+		}
+	}
+
+	ptr = predictedStepIndices3.begin();
+
+	while (ptr != predictedStepIndices3.end() && !predictedIndexMatched3)
+	{
+		if ((*ptr) >= position)
+		{
+			predictedIndexMatched3 = true;
+			predictedIndex3 = (*ptr);
 		}
 		else
 		{
@@ -590,14 +668,32 @@ void LoadedFileInfo::DeleteStep(int position, int maxRange)
 			firstTypeMatched = 3;
 		}
 	}
-	if (predictedIndexMatched)
+	if (predictedIndexMatched1)
 	{
-		if (predictedIndex < firstIndexMatched)
+		if (predictedIndex1 < firstIndexMatched)
 		{
-			firstIndexMatched = predictedIndex;
+			firstIndexMatched = predictedIndex1;
 			firstTypeMatched = 4;
 		}
 	}
+	if (predictedIndexMatched2)
+	{
+		if (predictedIndex2 < firstIndexMatched)
+		{
+			firstIndexMatched = predictedIndex2;
+			firstTypeMatched = 5;
+		}
+	}
+
+	if (predictedIndexMatched3)
+	{
+		if (predictedIndex3 < firstIndexMatched)
+		{
+			firstIndexMatched = predictedIndex3;
+			firstTypeMatched = 6;
+		}
+	}
+
 
 	if(firstIndexMatched < maxRange)
 	{
@@ -619,7 +715,15 @@ void LoadedFileInfo::DeleteStep(int position, int maxRange)
 		}
 		if (firstTypeMatched == 4)
 		{
-			predictedStepIndices.remove(firstIndexMatched);
+			predictedStepIndices1.remove(firstIndexMatched);
+		}
+		if (firstTypeMatched == 5)
+		{
+			predictedStepIndices2.remove(firstIndexMatched);
+		}
+		if (firstTypeMatched == 6)
+		{
+			predictedStepIndices3.remove(firstIndexMatched);
 		}
 	}
 
@@ -728,7 +832,7 @@ bool LoadedFileInfo::GetIfDomAxis(int sensor, int axis, int pos)
 	return false;
 }
 
-bool LoadedFileInfo::IndexMatch(int index, int &foot)
+bool LoadedFileInfo::IndexMatch(int index, int &foot, int sensornum)
 {
 	if(rightStepIndices.size() == 0 && leftStepIndices.size() == 0 && leftEdgecaseIndices.size() == 0 && rightEdgecaseIndices.size() == 0)
 	{
@@ -781,17 +885,51 @@ bool LoadedFileInfo::IndexMatch(int index, int &foot)
 			ptr++;
 		}
 
-		ptr = predictedStepSubset.begin();
-		while (ptr != predictedStepSubset.end())
+		// change what predicted step subset to match based on current sensor number
+		if (sensornum == 1)
 		{
-			if (index == (*ptr))
+			// Predicted Sensor 01 is foot 4
+			ptr = predictedStepSubset1.begin();
+			while (ptr != predictedStepSubset1.end())
 			{
-				foot = 4;
-				return true;
+				if (index == (*ptr))
+				{
+					foot = 4;
+					return true;
+				}
+				ptr++;
 			}
-			ptr++;
+		}
+		else if (sensornum == 2)
+		{
+			// Predicted Sensor 02 is foot 5
+			ptr = predictedStepSubset2.begin();
+			while (ptr != predictedStepSubset2.end())
+			{
+				if (index == (*ptr))
+				{
+					foot = 5;
+					return true;
+				}
+				ptr++;
+			}
+		}
+		else if (sensornum == 3)
+		{
+			// Predicted Sensor 03 is foot 6
+			ptr = predictedStepSubset3.begin();
+			while (ptr != predictedStepSubset3.end())
+			{
+				if (index == (*ptr))
+				{
+					foot = 6;
+					return true;
+				}
+				ptr++;
+			}
 		}
 
+		// no match with anything
 		foot = -1;
 		return false;
 	
@@ -1392,7 +1530,9 @@ void LoadedFileInfo::FreeData()
 	leftStepIndices.clear();
 	leftEdgecaseIndices.clear();
 	rightEdgecaseIndices.clear();
-	predictedStepIndices.clear();
+	predictedStepIndices1.clear();
+	predictedStepIndices2.clear();
+	predictedStepIndices3.clear();
 }
 
 void LoadedFileInfo::MakeStepSubsets(int startIndex, int endIndex)
@@ -1403,7 +1543,9 @@ void LoadedFileInfo::MakeStepSubsets(int startIndex, int endIndex)
 	leftStepSubset.clear();
 	rightEdgecaseSubset.clear();
 	leftEdgecaseSubset.clear();
-	predictedStepSubset.clear();
+	predictedStepSubset1.clear();
+	predictedStepSubset2.clear();
+	predictedStepSubset3.clear();
 
 	while(ptr != rightStepIndices.end())
 	{
@@ -1447,13 +1589,35 @@ void LoadedFileInfo::MakeStepSubsets(int startIndex, int endIndex)
 		ptr++;
 	}
 
-	ptr = predictedStepIndices.begin();
+	ptr = predictedStepIndices1.begin();
 
-	while (ptr != predictedStepIndices.end())
+	while (ptr != predictedStepIndices1.end())
 	{
 		if ((*ptr) >= startIndex && (*ptr) <= endIndex)
 		{
-			predictedStepSubset.push_back((*ptr));
+			predictedStepSubset1.push_back((*ptr));
+		}
+		ptr++;
+	}
+
+	ptr = predictedStepIndices2.begin();
+
+	while (ptr != predictedStepIndices2.end())
+	{
+		if ((*ptr) >= startIndex && (*ptr) <= endIndex)
+		{
+			predictedStepSubset2.push_back((*ptr));
+		}
+		ptr++;
+	}
+
+	ptr = predictedStepIndices3.begin();
+
+	while (ptr != predictedStepIndices3.end())
+	{
+		if ((*ptr) >= startIndex && (*ptr) <= endIndex)
+		{
+			predictedStepSubset3.push_back((*ptr));
 		}
 		ptr++;
 	}
@@ -1837,8 +2001,100 @@ void LoadedFileInfo::FindDomAxes(void)
 		ptr ++;
 	}
 
-	ptr = predictedStepSubset.begin();
-	while (ptr != predictedStepSubset.end())
+	ptr = predictedStepSubset1.begin();
+	while (ptr != predictedStepSubset1.end())
+	{
+		for (i = 0; i < NUM_SENSORS; i++)
+		{
+			tempStart = (*ptr) - 7;
+			tempEnd = (*ptr) + 7;
+			if (tempStart < 0)
+			{
+				tempStart = 0;
+			}
+			if (tempEnd > totalData[i])
+			{
+				tempEnd = totalData[i];
+			}
+			for (j = 0; j < NUM_AXES; j++)
+			{
+				tempMeanByAxis[j] = 0;
+				tempIntegByAxis[j] = 0;
+				for (k = tempStart; k <= tempEnd; k++)
+				{
+					tempMeanByAxis[j] += data[i][j][k];
+				}
+				tempMeanByAxis[j] = tempMeanByAxis[j] / (tempEnd - tempStart + 1);
+				maxDevByAxis[j] = -1;
+				for (k = tempStart; k <= tempEnd; k++)
+				{
+					if (abs(data[i][j][k] - tempMeanByAxis[j]) > maxDevByAxis[j])
+					{
+						maxDevByAxis[j] = abs(data[i][j][k] - tempMeanByAxis[j]);
+					}
+				}
+				/*for(k=tempStart; k<=tempEnd;k++)
+				{
+					tempIntegByAxis[j] += abs(data[i][j][k] - tempMeanByAxis[j]);
+				}*/
+			}
+			//tempDomAxis = std::distance(tempIntegByAxis, std::max_element(tempIntegByAxis,tempIntegByAxis+NUM_AXES-1));
+			tempDomAxis = std::distance(maxDevByAxis, std::max_element(maxDevByAxis, maxDevByAxis + NUM_AXES - 1));
+			domAxisRanges[i][tempDomAxis][axisRangesRecorded[i][tempDomAxis]][0] = tempStart;
+			domAxisRanges[i][tempDomAxis][axisRangesRecorded[i][tempDomAxis]][1] = tempEnd;
+			axisRangesRecorded[i][tempDomAxis] ++;
+		}
+		ptr++;
+	}
+
+	ptr = predictedStepSubset2.begin();
+	while (ptr != predictedStepSubset2.end())
+	{
+		for (i = 0; i < NUM_SENSORS; i++)
+		{
+			tempStart = (*ptr) - 7;
+			tempEnd = (*ptr) + 7;
+			if (tempStart < 0)
+			{
+				tempStart = 0;
+			}
+			if (tempEnd > totalData[i])
+			{
+				tempEnd = totalData[i];
+			}
+			for (j = 0; j < NUM_AXES; j++)
+			{
+				tempMeanByAxis[j] = 0;
+				tempIntegByAxis[j] = 0;
+				for (k = tempStart; k <= tempEnd; k++)
+				{
+					tempMeanByAxis[j] += data[i][j][k];
+				}
+				tempMeanByAxis[j] = tempMeanByAxis[j] / (tempEnd - tempStart + 1);
+				maxDevByAxis[j] = -1;
+				for (k = tempStart; k <= tempEnd; k++)
+				{
+					if (abs(data[i][j][k] - tempMeanByAxis[j]) > maxDevByAxis[j])
+					{
+						maxDevByAxis[j] = abs(data[i][j][k] - tempMeanByAxis[j]);
+					}
+				}
+				/*for(k=tempStart; k<=tempEnd;k++)
+				{
+					tempIntegByAxis[j] += abs(data[i][j][k] - tempMeanByAxis[j]);
+				}*/
+			}
+			//tempDomAxis = std::distance(tempIntegByAxis, std::max_element(tempIntegByAxis,tempIntegByAxis+NUM_AXES-1));
+			tempDomAxis = std::distance(maxDevByAxis, std::max_element(maxDevByAxis, maxDevByAxis + NUM_AXES - 1));
+			domAxisRanges[i][tempDomAxis][axisRangesRecorded[i][tempDomAxis]][0] = tempStart;
+			domAxisRanges[i][tempDomAxis][axisRangesRecorded[i][tempDomAxis]][1] = tempEnd;
+			axisRangesRecorded[i][tempDomAxis] ++;
+		}
+		ptr++;
+	}
+
+	ptr = predictedStepSubset3.begin();
+	while (ptr != predictedStepSubset3.end())
 	{
 		for (i = 0; i < NUM_SENSORS; i++)
 		{
@@ -1886,15 +2142,38 @@ void LoadedFileInfo::FindDomAxes(void)
 
 
 // function to create match pairs for SDA
+// requires pointers to hold returned stats, as well as sensor # to match metrics with
 // returns 2d array of matched gtStepIndices and predictedStepIndices pairings
-int** LoadedFileInfo::matchSDA(int* fp, int* fn, int* tp, int* maxlen) 
+// return NULL if sensor argument incorrect
+int** LoadedFileInfo::matchSDA(int sensor, int* fp, int* fn, int* tp, int* maxlen) 
 {
 	*fp = 0, *fn = 0, *tp = 0;
 	int RANGE = 7;
 	gtStepIndices.sort();
-	std::list<int>::iterator i = predictedStepIndices.begin();
+	std::list<int> *predictedStepIndices;
+	
+	// set predictedStepIndices to point to the correct sensor predicted index array
+	if (sensor == 1)
+	{
+		predictedStepIndices = &predictedStepIndices1;
+	}
+	else if (sensor == 2)
+	{
+		predictedStepIndices = &predictedStepIndices2;
+	}
+	else if (sensor == 3)
+	{
+		predictedStepIndices = &predictedStepIndices3;
+	}
+	else
+	{
+		return NULL;
+	}
+
+	// find SDA
+	std::list<int>::iterator i = (*predictedStepIndices).begin();
 	std::list<int>::iterator j = gtStepIndices.begin();
-	*maxlen = predictedStepIndices.size();
+	*maxlen = (*predictedStepIndices).size();
 	if (gtStepIndices.size() > *maxlen)
 	{
 		*maxlen = gtStepIndices.size();
@@ -1905,7 +2184,7 @@ int** LoadedFileInfo::matchSDA(int* fp, int* fn, int* tp, int* maxlen)
 		matches[a] = (int*)calloc(2, sizeof(int));
 	}
 
-	while (i != predictedStepIndices.end() && j != gtStepIndices.end())
+	while (i != (*predictedStepIndices).end() && j != gtStepIndices.end())
 	{
 		if (*i < (*j - RANGE))
 		{
@@ -1927,7 +2206,7 @@ int** LoadedFileInfo::matchSDA(int* fp, int* fn, int* tp, int* maxlen)
 	}
 
 	// get remaining fp and fn if they do not match in count
-	int diff = predictedStepIndices.size() - gtStepIndices.size();
+	int diff = (*predictedStepIndices).size() - gtStepIndices.size();
 	if (diff < 0) {
 		(*fp) -= diff;
 	}
@@ -1936,4 +2215,16 @@ int** LoadedFileInfo::matchSDA(int* fp, int* fn, int* tp, int* maxlen)
 	}
 
 	return matches;
+}
+
+
+// function to free memory allocated for SDA index match array
+// requires pointer to matched index array and maxlen argument
+void LoadedFileInfo::deleteSDA(int** matches, int maxlen)
+{
+	for (int i = 0; i < maxlen; i++) {
+		free(matches[i]);
+	}
+	free(matches);
+	return;
 }

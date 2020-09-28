@@ -20,7 +20,7 @@ public:
 	float GetMaxData(int sensor, int axis) {return maxData[sensor][axis];}
 	bool FilesAreLoaded() {return filesLoaded;}
 	//bool IndexMatch(int rangeStart, int rangeEnd, int index, int arr[2]);
-	bool IndexMatch(int index, int &foot);
+	bool IndexMatch(int index, int &foot, int sensornum);
 	void AddRightStep(int index);
 	void AddLeftStep(int index);
 	void AddRightEdgecase(int index);
@@ -32,7 +32,8 @@ public:
 	int GetLastStepIndex(int position, int condition);
 	int GetNextStepIndex(int position, int condition);
 	bool GetIfDomAxis(int sensor, int axis, int pos);
-	int** matchSDA(int* fp, int* fn, int* tp, int* maxlen);
+	int** matchSDA(int sensor, int* fp, int* fn, int* tp, int* maxlen);
+	void deleteSDA(int** matches, int maxlen);
 
 private:
 	LoadedFileInfo(void);
@@ -73,8 +74,12 @@ private:
 	std::list<int> leftEdgecaseIndices;
 	std::list<int> rightEdgecaseSubset;
 	std::list<int> leftEdgecaseSubset;
-	std::list<int> predictedStepIndices;
-	std::list<int> predictedStepSubset;
+	std::list<int> predictedStepIndices1;
+	std::list<int> predictedStepIndices2;
+	std::list<int> predictedStepIndices3;
+	std::list<int> predictedStepSubset1;
+	std::list<int> predictedStepSubset2;
+	std::list<int> predictedStepSubset3;
 	std::list<int> gtStepIndices;
 	float data[NUM_SENSORS][NUM_AXES][MAX_DATA];
 	char timeData[NUM_SENSORS][MAX_DATA][64];

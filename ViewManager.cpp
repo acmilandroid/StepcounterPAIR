@@ -274,7 +274,7 @@ void ViewManager::DrawData(void)
 	int startSensor;
 	int stopSensor;
 	int fp, fn, tp, maxlen; // stats
-	int** matches = fInfo.matchSDA(&fp, &fn, &tp, &maxlen); // get array of matching indices
+	int** matches; // array of matching step indices
 	int matchCount = 0; // counter for number of matches
 	int predictionMatch = 0, gtMatch = 0;
 
@@ -290,7 +290,7 @@ void ViewManager::DrawData(void)
 	}
 
 	for(int i=0;i<NUM_SENSORS;i++)
-	{
+	{		
 		for(int j=0;j<NUM_AXES;j++)
 		{
 			if(i==0 && j==0)
@@ -348,6 +348,7 @@ void ViewManager::DrawData(void)
 
 	for(curSensor=startSensor; curSensor<stopSensor; curSensor++)
 	{
+		matches = fInfo.matchSDA(curSensor + 1, &fp, &fn, &tp, &maxlen); // get array of matching indices sensor
 		for(axisNum=0;axisNum<NUM_AXES;axisNum++)
 		{
 			numData = fInfo.GetNumData(curSensor);
@@ -421,7 +422,7 @@ void ViewManager::DrawData(void)
 				}
 			
 				// if a step is found, mark it
-				result = fInfo.IndexMatch(dataIndex, foot);
+				result = fInfo.IndexMatch(dataIndex, foot, curSensor+1);
 				if (result)
 				{
 					rect.left = screenXCoord;
@@ -437,9 +438,6 @@ void ViewManager::DrawData(void)
 					// check if indices match with predicted or gt indices
 					predictionMatch = -1;
 					gtMatch = -1;
-					if (dataIndex == 632) {
-						printf("hello world\n");
-					}
 					for (int i = 0; i < maxlen; i++)
 					{
 						if (dataIndex == matches[i][0])
@@ -476,7 +474,7 @@ void ViewManager::DrawData(void)
 						}
 					}
 					// prediction with no match
-					else if (foot == 4)
+					else if (foot == 4 || foot == 5 || foot == 6)
 					{
 						brush = CreateSolidBrush(RGB(255, 0, 0));
 						FillRect(hDC, &p_rect, brush);
@@ -525,11 +523,8 @@ void ViewManager::DrawData(void)
 				dataIndex++;
 			}
 		}
+		fInfo.deleteSDA(matches, maxlen); // free match index memory
 	}
-	for (int i = 0; i < maxlen; i++) {
-		free(matches[i]);
-	}
-	free(matches);
 	ReleaseDC(hWnd,hDC);
 }
 
@@ -542,8 +537,8 @@ void ViewManager::DisplayFrame(void)
 	int				i;
 	RECT			VideoRect;
 	HBRUSH			brush;
-	//int				Frame_Index;
-	double				Time_Seconds;
+	//int			Frame_Index;
+	double			Time_Seconds;
 	int				dataWidth;
 	LoadedFileInfo &fInfo = LoadedFileInfo::GetInstance();
 	
