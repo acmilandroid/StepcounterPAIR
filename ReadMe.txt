@@ -1,8 +1,8 @@
 ========================================================================
-    WIN32 APPLICATION : StepcounterVIEW Project Overview
+    WIN32 APPLICATION : StepcounterPAIR Project Overview
 ========================================================================
 
-AppWizard has created this StepcounterVIEW application for you.
+AppWizard has created this StepcounterPAIR application for you.
 
 This file contains a summary of what you will find in each of the files that
 make up your StepcounterVIEW application.
